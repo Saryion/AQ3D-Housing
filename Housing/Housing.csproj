@@ -85,12 +85,8 @@
       <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
     <Target Name="AfterBuild">
+        <Copy SourceFiles="bin\Release\Housing.dll" DestinationFolder="S:\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed">
+        </Copy>
     </Target>
-    -->
-
 </Project>
