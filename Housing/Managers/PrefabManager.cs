@@ -9,12 +9,12 @@ namespace Housing.Managers
 {
     public class PrefabManager : MonoBehaviour
     {
-        public static GameObject LoadPrefabFromBundle(Bundle bundle)
+        public static GameObject LoadPrefabFromBundle(string fileName, string  prefabName)
         {
-            var loadedBundle = BundleManager.GetBundle(bundle.File);
+            var loadedBundle = BundleManager.GetBundle(fileName);
             if (loadedBundle == null) return null;
             
-            var prefab = loadedBundle.LoadAssetAsync<GameObject>(bundle.Prefab).asset as GameObject;
+            var prefab = loadedBundle.LoadAssetAsync<GameObject>(prefabName).asset as GameObject;
             var instance = Instantiate(prefab);
 
             return instance;

@@ -33,7 +33,12 @@ namespace Housing
         private void Update()
         {
             if (House == null) return;
-            
+
+            if (Input.GetKeyDown(KeyCode.F1))
+            {
+                LoadFurnitureByName("Wooden Strongbox");
+            }
+
             if (IsInEntranceMap())
             {
                 LoadTransferPad(House.Entrances.Find(e => e.MapID == AreaData.id));
@@ -56,11 +61,49 @@ namespace Housing
             }
         }
         
+        public static void LoadModels()
+        {
+            var gameObjects = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
+            
+            foreach (var furniture in House.Furnitures)
+            {
+                foreach (var obj in furniture.Model.Objects)
+                {
+                    var depends = obj.Dependency;
+                    if (depends.Bundle == "" || depends.Prefab == "") continue;
+
+                    if (!PrefabManager.IsPrefabLoaded(gameObjects, depends.Prefab))
+                    {
+                        var file = House.Bundles.Find(b => b.Name == depends.Bundle).File;
+                        if (file == null) continue;
+
+                        var bundle = BundleManager.GetBundle(file);
+                        if (bundle != null)
+                        {
+                            var prefab = bundle.LoadAssetAsync<GameObject>(depends.Prefab).asset as GameObject;
+                            var instance = Instantiate(prefab);
+                            instance.name = obj.Name + " (Prefab)";
+                            instance.SetActive(false);
+                            instance.transform.position = new Vector3(0f, 0f, 0f);
+                            instance.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+                            ModelManager.LoadedModels.Add(instance);
+                        }
+                    }
+                }
+            }
+        }
+        
+        public static Interior GetInteriorByName(string name)
+        {
+            return House.Interiors.Find(i => i.Name == name);
+        }
+        
         public static void LoadInterior(Interior interior)
         {
             if (interior == null) return;
             if (interior.Loaded) return;
 
+            LoadModels();
             interior.Loaded = true;
             
             LoadTransferPad(interior.TransferPad);
@@ -70,7 +113,7 @@ namespace Housing
         {
             if (!interior.Loaded) return;
 
-            // ModelManager.DeleteModelsWithSuffix("Interior");
+            ModelManager.DeleteModelsWithSuffix("Furniture");
 
             interior.Loaded = false;
             interior.TransferPad.Loaded = false;
@@ -145,6 +188,15 @@ namespace Housing
             TransformManager.MergeGoTransform(Transfer[1], transform);
 
             transferPad.Loaded = true;
+        }
+        
+        public static void LoadFurnitureByName(string name)
+        {
+            var furniture = House.Furnitures.Find(f => f.Name == name);
+            if (furniture == null) return;
+
+            var transform = Entities.Instance.me.wrapper.transform;
+            var model = ModelManager.SpawnModel(furniture.Model, transform.position, transform.eulerAngles, "Furniture");
         }
     }
 }

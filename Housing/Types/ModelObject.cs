@@ -6,6 +6,6 @@
         public float[] Position;
         public float[] Rotation;
         public float[] Scale;
-        public string Dependency;
+        public ModelObjectDependency Dependency;
     }
 }

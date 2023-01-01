@@ -4,6 +4,5 @@
     {
         public string Name;
         public string File;
-        public string Prefab;
     }
 }

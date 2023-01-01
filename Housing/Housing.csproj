@@ -79,6 +79,7 @@
         <Compile Include="Types\Interior.cs" />
         <Compile Include="Types\Model.cs" />
         <Compile Include="Types\ModelObject.cs" />
+        <Compile Include="Types\ModelObjectDependency.cs" />
         <Compile Include="Types\TransferPad.cs" />
     </ItemGroup>
     <ItemGroup>
