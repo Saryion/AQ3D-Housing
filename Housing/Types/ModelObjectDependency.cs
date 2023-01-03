@@ -4,5 +4,6 @@
     {
         public string Bundle;
         public string Prefab;
+        public string Path;
     }
 }

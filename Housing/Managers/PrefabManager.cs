@@ -9,7 +9,7 @@ namespace Housing.Managers
 {
     public class PrefabManager : MonoBehaviour
     {
-        public static GameObject LoadPrefabFromBundle(string fileName, string  prefabName)
+        public static GameObject LoadPrefabFromBundle(string fileName, string  prefabName, string path)
         {
             var loadedBundle = BundleManager.GetBundle(fileName);
             if (loadedBundle == null) return null;
