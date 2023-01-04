@@ -22,6 +22,11 @@ namespace Housing.Managers
                 var instance = Instantiate(match, modelGo.transform);
                 instance.SetActive(true);
                 instance.name = obj.Name + $" ({suffix})";
+
+                if (instance.GetComponent<BoxCollider>() == null)
+                {
+                    instance.AddComponent<BoxCollider>();
+                }
                 
                 instance.transform.position = PrefabManager.ParseFArrayToVector3(obj.Position);
                 instance.transform.eulerAngles = PrefabManager.ParseFArrayToVector3(obj.Rotation);

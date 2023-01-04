@@ -73,6 +73,7 @@
         <Compile Include="Config\SavedFurniture.cs" />
         <Compile Include="Config\SavedInterior.cs" />
         <Compile Include="Housing.cs" />
+        <Compile Include="Listeners\LFurniture.cs" />
         <Compile Include="Listeners\Melodia.cs" />
         <Compile Include="Listeners\NotifyArea.cs" />
         <Compile Include="Listeners\Transfer.cs" />
@@ -86,6 +87,7 @@
         <Compile Include="Managers\UIFurnitureManager.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Types\Bundle.cs" />
+        <Compile Include="Types\EditingMode.cs" />
         <Compile Include="Types\Furniture.cs" />
         <Compile Include="Types\House.cs" />
         <Compile Include="Types\Interior.cs" />

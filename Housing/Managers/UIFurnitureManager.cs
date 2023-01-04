@@ -8,6 +8,7 @@ namespace Housing.Managers
         public UIFurnitureManager Instance;
 
         public static bool Shown;
+        public static string SearchTerm = "";
         
         public static void Load()
         {
@@ -40,26 +41,35 @@ namespace Housing.Managers
             style.normal.textColor = Color.white;
             
             var positionSize = new Rect(boxX, boxY, boxW, boxH);
-            GUI.Box(positionSize, "Available Furniture", style);
+
+            var numberOfFurniture = Housing.House.Furnitures.Count;
+            GUI.Box(positionSize, $"Available Furniture ({numberOfFurniture})", style);
+            
+            positionSize = new Rect(boxX + boxPadding, boxY + boxPadding, buttonLength, buttonSize / 2);
+            SearchTerm = GUI.TextField(positionSize, SearchTerm, 25);
 
             var i = 1;
             foreach (var furniture in Housing.House.Furnitures)
             {
+                if (SearchTerm != "")
+                {
+                    if (!furniture.Name.ToLower().Contains(SearchTerm.ToLower())) continue;
+                }
+                
                 style = new GUIStyle(GUI.skin.button)
                 {
                     fontSize = 20,
                 };
                 
-                if (i > 9) continue;
+                if (i > 10) continue;
 
                 var padding = i == 1 ? boxPadding : 0f;
                 
                 positionSize = new Rect(boxX + boxPadding, boxY + (boxPadding + buttonSpacing * 2f) * i, buttonLength, buttonSize);
                 if (GUI.Button(positionSize, furniture.Name, style))
                 {
-                    var transform = Entities.Instance.me.wrapper.transform;
-                    Housing.LoadFurnitureByName(furniture.Name);
-                    Housing.PlaceFurniture(furniture, transform.localPosition, transform.localEulerAngles, transform.localScale);
+                    Housing.LoadNewFurniture(furniture.Name);
+                    Shown = false;
                 }
                 ++i;
             }

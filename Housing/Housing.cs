@@ -18,23 +18,53 @@ namespace Housing
     {
         public static Housing Instance;
         public static House House;
-        
+
         public static GameObject[] Transfer = new GameObject[2];
         public static AreaData AreaData => Game.Instance.AreaData;
 
         public static HouseConfig Config;
 
         public static bool BuildMode;
+        public static GameObject NewFurniture;
+        public static GameObject SelectedFurniture;
+
+        public static float SelectedFurnitureDistance = 1;
+        public static EditingMode EditingMode = EditingMode.NONE;
+
+        public static Camera Camera => Camera.main;
+        public static Transform CameraTransform;
+        
+        private class FreeCamSettings
+        {
+            public float MainSpeed;
+            public float ShiftAdd;
+            public float MaxShift;
+        }
+
+        private static readonly FreeCamSettings[] freeCamSettings =
+        {
+            new FreeCamSettings
+            {
+                MainSpeed = 4f,
+                ShiftAdd = 8f,
+                MaxShift = 8f
+            }
+        };
 
         // Call this method to initialize a new instance of housing,
         // then attach to game object.
         public static void Load()
-        {
+        { 
             new GameObject().AddComponent<Housing>().name = "Housing";
             CacheManager.CacheHousing();
 
             Config = ConfigManager.LoadConfig();
             UIFurnitureManager.Load();
+
+            CameraTransform = Camera.transform.parent;
+            Camera.GetComponent<FlyCam>().mainSpeed = freeCamSettings[0].MainSpeed;
+            Camera.GetComponent<FlyCam>().shiftAdd = freeCamSettings[0].ShiftAdd;
+            Camera.GetComponent<FlyCam>().maxShift = freeCamSettings[0].MaxShift;
         }
 
         private void Awake()
@@ -46,11 +76,6 @@ namespace Housing
         {
             if (House == null) return;
             if (Config == null) return;
-
-            if (Input.GetKeyDown(KeyCode.F1))
-            {
-                UIFurnitureManager.Shown = !UIFurnitureManager.Shown;
-            }
 
             if (IsInEntranceMap())
             {
@@ -70,7 +95,105 @@ namespace Housing
 
             if (!IsInInterior())
             {
+                ToggleBuildMode(false);
                 UnloadInterior(House.Interiors[0]);
+            }
+            
+            if (Input.GetKeyDown(KeyCode.F1) && IsInInterior())
+            {
+                ToggleBuildMode(BuildMode = !BuildMode);
+            }
+
+            if (BuildMode)
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                    UIFurnitureManager.Shown = !UIFurnitureManager.Shown;
+                }
+                
+                if (Input.GetKeyDown(KeyCode.Delete))
+                {
+                    try
+                    {
+                        var ray = Camera.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray, out var obj, 100))
+                        {
+                            var com = obj.transform.parent.GetComponent<ComFurniture>();
+                            if (com != null)
+                            {
+                                Chat.Notify(obj.transform.parent.name + $" ({com.ID})");
+                                DeleteFurniture(com.ID);
+                            }
+                        }
+                    
+                    } catch (NullReferenceException) { }
+                }
+            }
+            
+            if (NewFurniture != null)
+            {
+                if (Input.GetKeyDown(KeyCode.R))
+                {
+                    EditingMode = EditingMode.ROTATING;
+                }
+
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Destroy(NewFurniture);
+                    NewFurniture = null;
+                    
+                    UIMainMenu.ClearWindows();
+                }
+                
+                var cameraTransform = Camera.transform;
+                NewFurniture.transform.position = cameraTransform.position + cameraTransform.forward * 5;
+            }
+
+            if (NewFurniture != null && EditingMode == EditingMode.ROTATING)
+            {
+                if (Input.GetAxis("Mouse ScrollWheel") > 0.0)
+                {
+                    NewFurniture.transform.Rotate(Vector3.up * 3f, Space.Self);
+                }
+            
+                if (Input.GetAxis("Mouse ScrollWheel") < 0.0)
+                {
+                    NewFurniture.transform.Rotate(Vector3.down * 3f, Space.Self);
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.E) && NewFurniture != null)
+            {
+                var id = NewFurniture.GetComponent<ComFurniture>().ID;
+                PlaceFurniture(House.Furnitures.Find(f => f.Model.Name + " (Furniture)" == NewFurniture.name),
+                    id, NewFurniture.transform.position, NewFurniture.transform.eulerAngles, NewFurniture.transform.localScale);
+                NewFurniture = null;
+            }
+        }
+
+        public static void ToggleBuildMode(bool state)
+        {
+            BuildMode = state;
+            
+            if (Camera == null) return;
+
+            if (!BuildMode)
+            {
+                Camera.transform.parent = CameraTransform;
+                Camera.GetComponentInParent<CameraController>().enabled = true;
+                Camera.GetComponent<FlyCam>().enabled = false;
+                Camera.transform.localPosition = Vector3.zero;
+                Camera.transform.localRotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
+                
+                Entities.Instance.me.IsMovementDisabled = false;
+            }
+            else
+            {
+                Camera.GetComponentInParent<CameraController>().enabled = false;
+                Camera.GetComponent<FlyCam>().enabled = true;
+                Camera.transform.parent = null;
+                
+                Entities.Instance.me.IsMovementDisabled = true;
             }
         }
         
@@ -94,7 +217,8 @@ namespace Housing
                         if (bundle != null)
                         {
                             var prefab = bundle.LoadAssetAsync<GameObject>(depends.Prefab).asset as GameObject;
-
+                            if (prefab == null) continue;
+                            
                             GameObject instance;
                             if (depends.Path == "")
                                 instance = Instantiate(prefab);
@@ -143,20 +267,6 @@ namespace Housing
 
         }
 
-        public static void ChangeInterior(string name)
-        {
-            var interior = GetSavedInterior(name);
-            if (interior == null) return;
-
-            interior.Active = true;
-            GetActiveSavedInterior().Active = false;
-
-            ModelManager.DeleteModelsWithSuffix("Furniture");
-            
-            UnloadInterior(House.Interiors[0]);
-            LoadInterior(House.Interiors[0]);
-        }
-        
         public static bool IsInEntranceMap()
         {
             return House.Entrances.Find(e => e.MapID == AreaData.id) != null;
@@ -241,26 +351,29 @@ namespace Housing
         {
             return House.Furnitures.Find(f => f.Name == name);
         }
-        
-        public static GameObject LoadFurnitureByName(string name, float[] position = null, float[] rotation = null, float[] scale = null)
-        {
-            var furniture = House.Furnitures.Find(f => f.Name == name);
-            if (furniture == null) return null;
 
-            Transform transform;
-            if (position == null && rotation == null && scale == null)
+        public static void LoadNewFurniture(string name)
+        {
+            if (!BuildMode) return;
+
+            var model = ModelManager.SpawnModel(GetFurnitureByName(name).Model, Vector3.zero, Vector3.zero, "Furniture");
+            
+            var id = 0;
+            for (var i = 1; id == 0; i++)
             {
-                transform = Entities.Instance.me.wrapper.transform;
-            }
-            else
-            {
-                transform = PrefabManager.ParseToTransformFromFArray(position, rotation, scale);
+                if (GetActiveSavedInterior().Furnitures.Find(f => f.ID == i) == null)
+                {
+                    id = i;
+                }
             }
             
-            var m = ModelManager.SpawnModel(furniture.Model, transform.position, transform.eulerAngles, "Furniture");
-            return m;
+            var com = model.AddComponent<ComFurniture>();
+            com.ID = id;
+            com.Name = name;
+            
+            NewFurniture = model;
         }
-
+        
         public static void LoadSavedFurnitures(SavedInterior interior)
         {
             if (!interior.Furnitures.Any()) return;
@@ -277,27 +390,20 @@ namespace Housing
                     transform.position,
                     transform.eulerAngles,
                     "Furniture");
-
+                
                 var com = model.AddComponent<ComFurniture>();
                 com.ID = furniture.ID;
                 com.Name = furniture.Name;
+
+                model.AddComponent<MeshCollider>();
             }
         }
         
-        public static void PlaceFurniture(Furniture furniture, Vector3 position, Vector3 rotation, Vector3 scale)
+        public static void PlaceFurniture(Furniture furniture, int id, Vector3 position, Vector3 rotation, Vector3 scale)
         {
             if (furniture == null) return;
             if (Config == null) return;
 
-            var id = 0;
-            for (var i = 1; id == 0; i++)
-            {
-                if (GetActiveSavedInterior().Furnitures.Find(f => f.ID == i) == null)
-                {
-                    id = i;
-                }
-            }
-            
             var savedFurniture = new SavedFurniture()
             {
                 ID = id,
@@ -307,10 +413,46 @@ namespace Housing
                 Scale = new [] { scale.x, scale.y, scale.z },
             };
             
-            GetActiveSavedInterior().Furnitures.Add(savedFurniture);
+            if (GetActiveSavedInterior().Furnitures.Find(f => f.ID == id) == null)
+            {
+                GetActiveSavedInterior().Furnitures.Add(savedFurniture);
+            }
+            else
+            {
+                var furnitures = GetActiveSavedInterior().Furnitures;
+                furnitures[furnitures.FindIndex(f => f.ID == id)] = savedFurniture;
+            }
+            
             SaveConfig();
         }
 
+        public static void DeleteFurniture(int id)
+        {
+            var model = GetFurnitureModelByID(id);
+            if (model == null) return;
+            
+            DestroyImmediate(model);
+            ModelManager.LoadedModels.Remove(model);
+
+            var savedFurnitures = GetActiveSavedInterior().Furnitures;
+            savedFurnitures.Remove(savedFurnitures.Find(f => f.ID == id));
+            SaveConfig();
+        }
+
+        public static GameObject GetFurnitureModelByID(int id)
+        {
+            var models = ModelManager.LoadedModels;
+            foreach (var model in models)
+            {
+                var com = model.GetComponent<ComFurniture>();
+                if (com == null) continue;
+
+                if (com.ID == id) return model;
+            }
+
+            return null;
+        }
+        
         public static void SaveConfig()
         {
             var config = JsonConvert.SerializeObject(Config, Formatting.Indented);
