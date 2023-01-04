@@ -9,7 +9,7 @@ namespace Housing.Managers
     {
         public static List<GameObject> LoadedModels = new List<GameObject>();
         
-        public static GameObject SpawnModel(Model model, Vector3 position, Vector3 rotation, string suffix)
+        public static GameObject SpawnModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, string suffix)
         {
             var modelGo = new GameObject(model.Name + $" ({suffix})");
             var gameObjects = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
@@ -37,6 +37,7 @@ namespace Housing.Managers
             
             modelGo.transform.position = position;
             modelGo.transform.eulerAngles = rotation;
+            modelGo.transform.localScale = scale;
             
             LoadedModels.Add(modelGo);
             return modelGo;

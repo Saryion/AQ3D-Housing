@@ -47,6 +47,9 @@
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Xml" />
+        <Reference Include="Unity.TextMeshPro">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine.AssetBundleModule">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
         </Reference>
@@ -64,6 +67,18 @@
         </Reference>
         <Reference Include="UnityEngine.PhysicsModule">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextCoreFontEngineModule">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextCoreModule">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.TextCoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextCoreTextEngineModule">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextRenderingModule">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\AdventureQuest3D\aq3d\AQ3D_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -84,6 +99,7 @@
         <Compile Include="Managers\ModelManager.cs" />
         <Compile Include="Managers\PrefabManager.cs" />
         <Compile Include="Managers\TransformManager.cs" />
+        <Compile Include="Managers\UIBuildMode.cs" />
         <Compile Include="Managers\UIFurnitureManager.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Types\Bundle.cs" />

@@ -27,9 +27,10 @@ namespace Housing
         public static bool BuildMode;
         public static GameObject NewFurniture;
         public static GameObject SelectedFurniture;
-
-        public static float SelectedFurnitureDistance = 1;
+        public static GameObject HoveringFurniture;
+        
         public static EditingMode EditingMode = EditingMode.NONE;
+        public static float FurnitureScale = 1f;
 
         public static Camera Camera => Camera.main;
         public static Transform CameraTransform;
@@ -56,6 +57,7 @@ namespace Housing
         public static void Load()
         { 
             new GameObject().AddComponent<Housing>().name = "Housing";
+            new GameObject().AddComponent<UIBuildMode>().name = "UIBuildMode";
             CacheManager.CacheHousing();
 
             Config = ConfigManager.LoadConfig();
@@ -128,6 +130,23 @@ namespace Housing
                     
                     } catch (NullReferenceException) { }
                 }
+                
+                try
+                {
+                    var ray = Camera.ScreenPointToRay(Input.mousePosition);
+                    if (Physics.Raycast(ray, out var obj, 100))
+                    {
+                        var com = obj.transform.parent.GetComponent<ComFurniture>();
+                        if (com != null)
+                        {
+                            HoveringFurniture = obj.transform.parent.gameObject;
+                            return;
+                        }
+
+                        HoveringFurniture = null;
+                    }
+                    
+                } catch (NullReferenceException) { }
             }
             
             if (NewFurniture != null)
@@ -136,11 +155,18 @@ namespace Housing
                 {
                     EditingMode = EditingMode.ROTATING;
                 }
+                
+                if (Input.GetKeyDown(KeyCode.T))
+                {
+                    EditingMode = EditingMode.SCALING;
+                    UIMenuWindow.ClearWindows();
+                }
 
                 if (Input.GetKeyDown(KeyCode.Escape))
                 {
                     Destroy(NewFurniture);
                     NewFurniture = null;
+                    FurnitureScale = 1f;
                     
                     UIMainMenu.ClearWindows();
                 }
@@ -161,13 +187,36 @@ namespace Housing
                     NewFurniture.transform.Rotate(Vector3.down * 3f, Space.Self);
                 }
             }
+            
+            if (NewFurniture != null && EditingMode == EditingMode.SCALING)
+            {
+                if (Input.GetAxis("Mouse ScrollWheel") > 0.0)
+                {
+                    if (FurnitureScale <= 2)
+                    {
+                        FurnitureScale += 0.1f;
+                        NewFurniture.transform.localScale += new Vector3(0.1f, 0.1f, 0.1f);
+                    }
+                }
+            
+                if (Input.GetAxis("Mouse ScrollWheel") < 0.0)
+                {
+                    if (FurnitureScale >= 0.5)
+                    {
+                        FurnitureScale -= 0.1f;
+                        NewFurniture.transform.localScale -= new Vector3(0.1f, 0.1f, 0.1f);
+                    }
+                }
+            }
 
             if (Input.GetKeyDown(KeyCode.E) && NewFurniture != null)
             {
                 var id = NewFurniture.GetComponent<ComFurniture>().ID;
                 PlaceFurniture(House.Furnitures.Find(f => f.Model.Name + " (Furniture)" == NewFurniture.name),
                     id, NewFurniture.transform.position, NewFurniture.transform.eulerAngles, NewFurniture.transform.localScale);
+                
                 NewFurniture = null;
+                FurnitureScale = 1f;
             }
         }
 
@@ -356,7 +405,7 @@ namespace Housing
         {
             if (!BuildMode) return;
 
-            var model = ModelManager.SpawnModel(GetFurnitureByName(name).Model, Vector3.zero, Vector3.zero, "Furniture");
+            var model = ModelManager.SpawnModel(GetFurnitureByName(name).Model, Vector3.zero, Vector3.zero, Vector3.one, "Furniture");
             
             var id = 0;
             for (var i = 1; id == 0; i++)
@@ -389,6 +438,7 @@ namespace Housing
                     GetFurnitureByName(furniture.Name).Model,
                     transform.position,
                     transform.eulerAngles,
+                    transform.localScale,
                     "Furniture");
                 
                 var com = model.AddComponent<ComFurniture>();
@@ -422,7 +472,8 @@ namespace Housing
                 var furnitures = GetActiveSavedInterior().Furnitures;
                 furnitures[furnitures.FindIndex(f => f.ID == id)] = savedFurniture;
             }
-            
+
+            EditingMode = EditingMode.NONE;
             SaveConfig();
         }
 
