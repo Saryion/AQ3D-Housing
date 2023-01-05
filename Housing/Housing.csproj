@@ -96,6 +96,7 @@
         <Compile Include="Managers\BundleManager.cs" />
         <Compile Include="Managers\CacheManager.cs" />
         <Compile Include="Managers\ConfigManager.cs" />
+        <Compile Include="Managers\FurnitureManager.cs" />
         <Compile Include="Managers\ModelManager.cs" />
         <Compile Include="Managers\PrefabManager.cs" />
         <Compile Include="Managers\TransformManager.cs" />

@@ -58,8 +58,9 @@ namespace Housing
         { 
             new GameObject().AddComponent<Housing>().name = "Housing";
             new GameObject().AddComponent<UIBuildMode>().name = "UIBuildMode";
+            new GameObject().AddComponent<FurnitureManager>().name = "FurnitureManager";
+            
             CacheManager.CacheHousing();
-
             Config = ConfigManager.LoadConfig();
             UIFurnitureManager.Load();
 
@@ -105,107 +106,9 @@ namespace Housing
             {
                 ToggleBuildMode(BuildMode = !BuildMode);
             }
-
-            if (BuildMode)
-            {
-                if (Input.GetKeyDown(KeyCode.F))
-                {
-                    UIFurnitureManager.Shown = !UIFurnitureManager.Shown;
-                }
-                
-                if (Input.GetKeyDown(KeyCode.Delete))
-                {
-                    var hover = GetFurnitureByHover();
-                    if (hover != null)
-                    {
-                        var com = hover.GetComponent<ComFurniture>();
-                        if (com == null) return;
-                        
-                        DeleteFurniture(com.ID);
-                    }
-                }
-
-                if (NewFurniture == null)
-                {
-                    var hover = GetFurnitureByHover();
-                    if (hover == null) HoveringFurniture = null;
-
-                    HoveringFurniture = hover;
-                }
-            }
-            
-            if (NewFurniture != null)
-            {
-                if (Input.GetKeyDown(KeyCode.R))
-                {
-                    EditingMode = EditingMode.ROTATING;
-                }
-                
-                if (Input.GetKeyDown(KeyCode.T))
-                {
-                    EditingMode = EditingMode.SCALING;
-                    UIMenuWindow.ClearWindows();
-                }
-
-                if (Input.GetKeyDown(KeyCode.Escape))
-                {
-                    Destroy(NewFurniture);
-                    NewFurniture = null;
-                    FurnitureScale = 1f;
-                    
-                    UIMainMenu.ClearWindows();
-                }
-                
-                var cameraTransform = Camera.transform;
-                NewFurniture.transform.position = cameraTransform.position + cameraTransform.forward * 5;
-            }
-
-            if (NewFurniture != null && EditingMode == EditingMode.ROTATING)
-            {
-                if (Input.GetAxis("Mouse ScrollWheel") > 0.0)
-                {
-                    NewFurniture.transform.Rotate(Vector3.up * 3f, Space.Self);
-                }
-            
-                if (Input.GetAxis("Mouse ScrollWheel") < 0.0)
-                {
-                    NewFurniture.transform.Rotate(Vector3.down * 3f, Space.Self);
-                }
-            }
-            
-            if (NewFurniture != null && EditingMode == EditingMode.SCALING)
-            {
-                if (Input.GetAxis("Mouse ScrollWheel") > 0.0)
-                {
-                    if (FurnitureScale <= 2)
-                    {
-                        FurnitureScale += 0.1f;
-                        NewFurniture.transform.localScale += new Vector3(0.1f, 0.1f, 0.1f);
-                    }
-                }
-            
-                if (Input.GetAxis("Mouse ScrollWheel") < 0.0)
-                {
-                    if (FurnitureScale >= 0.5)
-                    {
-                        FurnitureScale -= 0.1f;
-                        NewFurniture.transform.localScale -= new Vector3(0.1f, 0.1f, 0.1f);
-                    }
-                }
-            }
-
-            if (Input.GetKeyDown(KeyCode.E) && NewFurniture != null)
-            {
-                var id = NewFurniture.GetComponent<ComFurniture>().ID;
-                PlaceFurniture(House.Furnitures.Find(f => f.Model.Name + " (Furniture)" == NewFurniture.name),
-                    id, NewFurniture.transform.position, NewFurniture.transform.eulerAngles, NewFurniture.transform.localScale);
-                
-                NewFurniture = null;
-                FurnitureScale = 1f;
-            }
         }
 
-        private static GameObject GetFurnitureByHover()
+        public static GameObject GetFurnitureByHover()
         {
             try
             {
@@ -233,7 +136,6 @@ namespace Housing
         public static void ToggleBuildMode(bool state)
         {
             BuildMode = state;
-            
             if (Camera == null) return;
 
             if (!BuildMode)
