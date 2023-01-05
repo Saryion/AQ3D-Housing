@@ -108,45 +108,30 @@ namespace Housing
 
             if (BuildMode)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1))
+                if (Input.GetKeyDown(KeyCode.F))
                 {
                     UIFurnitureManager.Shown = !UIFurnitureManager.Shown;
                 }
                 
                 if (Input.GetKeyDown(KeyCode.Delete))
                 {
-                    try
+                    var hover = GetFurnitureByHover();
+                    if (hover != null)
                     {
-                        var ray = Camera.ScreenPointToRay(Input.mousePosition);
-                        if (Physics.Raycast(ray, out var obj, 100))
-                        {
-                            var com = obj.transform.parent.GetComponent<ComFurniture>();
-                            if (com != null)
-                            {
-                                Chat.Notify(obj.transform.parent.name + $" ({com.ID})");
-                                DeleteFurniture(com.ID);
-                            }
-                        }
-                    
-                    } catch (NullReferenceException) { }
-                }
-                
-                try
-                {
-                    var ray = Camera.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out var obj, 100))
-                    {
-                        var com = obj.transform.parent.GetComponent<ComFurniture>();
-                        if (com != null)
-                        {
-                            HoveringFurniture = obj.transform.parent.gameObject;
-                            return;
-                        }
-
-                        HoveringFurniture = null;
+                        var com = hover.GetComponent<ComFurniture>();
+                        if (com == null) return;
+                        
+                        DeleteFurniture(com.ID);
                     }
-                    
-                } catch (NullReferenceException) { }
+                }
+
+                if (NewFurniture == null)
+                {
+                    var hover = GetFurnitureByHover();
+                    if (hover == null) HoveringFurniture = null;
+
+                    HoveringFurniture = hover;
+                }
             }
             
             if (NewFurniture != null)
@@ -220,6 +205,31 @@ namespace Housing
             }
         }
 
+        private static GameObject GetFurnitureByHover()
+        {
+            try
+            {
+                var ray = Camera.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out var obj, 100))
+                {
+                    var com = obj.transform.parent.GetComponent<ComFurniture>();
+                    if (com != null)
+                    {
+                        return obj.transform.parent.gameObject;
+                    }
+
+                    return null;
+                }
+
+            }
+            catch (NullReferenceException)
+            {
+                return null;
+            }
+            
+            return null;
+        }
+        
         public static void ToggleBuildMode(bool state)
         {
             BuildMode = state;

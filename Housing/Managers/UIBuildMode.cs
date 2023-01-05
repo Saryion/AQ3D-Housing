@@ -51,7 +51,7 @@ namespace Housing.Managers
 
             positionSize.x += -35f;
             positionSize.y += 45f;
-            GUI.Label(positionSize, "1        Furniture Menu", style);
+            GUI.Label(positionSize, "F        Furniture Menu", style);
         }
 
         private void OnGUI()
